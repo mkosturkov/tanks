@@ -1,5 +1,8 @@
 'use strict';
-function Scene() {
+function Scene(canvas) {
+	if(canvas) {
+		this.setCanvas(canvas);
+	}
 }
 
 Scene.prototype.lastDrawTime = 0;
