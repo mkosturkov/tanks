@@ -4,6 +4,7 @@
     <title>Tanks tester</title>
     <script src="js/graphics/Scene.js"></script>
     <script src="js/graphics/MovingObject.js"></script>
+	<script src="js/graphics/CollisionDetector.js"></script>
   </head>
   <body>
 	<canvas id="the-canvas" width="500" height="500"></canvas>
@@ -20,13 +21,6 @@
 		};
 		Scene.prototype.clearInterval = function(intervalId) {
 			return window.clearInterval(intervalId);
-		};
-		
-		MovingObject.prototype.Math.cos = function(angle) {
-			return Math.cos(angle);
-		};
-		MovingObject.prototype.Math.sin = function(angle) {
-			return Math.sin(angle);
 		};
 		
 		var canvas = document.getElementById('the-canvas');
@@ -46,8 +40,28 @@
 			speed: 0.1,
 			rotSpeed: 0.001
 		};
-		o1.width = c1.height;
+		o1.width = c1.width;
 		o1.height = c1.height;
+		o1.x = o1.width / 2 + 100;
+		o1.y = o1.height / 2 + 100;
+		
+		console.log('hw = ' + o1.getHalfWidth());
+		console.log('hh = ' + o1.getHalfHeight());
+		console.log('hd = ' + o1.getHalfDiagonal());
+		console.log('da = ' + o1.getDiagonalAngle());
+		
+		function logEdges() {
+			console.log('ax = ' + o1.getEdge('A', true));
+			console.log('ay = ' + o1.getEdge('A', false));
+			console.log('bx = ' + o1.getEdge('B', true));
+			console.log('by = ' + o1.getEdge('B', false));
+			console.log('cx = ' + o1.getEdge('C', true));
+			console.log('cy = ' + o1.getEdge('C', false));
+			console.log('dx = ' + o1.getEdge('D', true));
+			console.log('dy = ' + o1.getEdge('D', false));
+		};
+		//logEdges();
+		
 		
 		
 		c2 = document.createElement('canvas');
@@ -70,7 +84,14 @@
 		scene.start();
 		//setTimeout(function() {scene.stop();}, 3100); 
 		
+		var cd = new CollisionDetector(500, 500);
+		var coId;
+		
+		var keyCode = 0;
 		document.onkeydown = function(event) {
+			if(event.keyCode === keyCode) {
+				return false;
+			}
 			switch(event.keyCode) {
 				case 37: // left
 					o1.rotateLeft();
@@ -87,7 +108,12 @@
 			}
 			if([37, 38, 39, 40].indexOf(event.keyCode) > -1) {
 				event.preventDefault();
+				if(coId) {
+					cd.removeItem(coId);
+				}
+				coId = cd.addItem(o1);
 			}
+			keyCode = event.keyCode;
 		};
 		
 		document.onkeyup = function(event) {
@@ -99,6 +125,9 @@
 			if([37, 38, 39, 40].indexOf(event.keyCode) > -1) {
 				event.preventDefault();
 			}
+			cd.removeItem(coId);
+			keyCode = 0;
+			//logEdges();
 		};
 	</script>
   </body>

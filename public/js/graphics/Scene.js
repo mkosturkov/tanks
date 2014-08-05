@@ -13,7 +13,7 @@ Scene.prototype.drawObjectsSorted = false;
 Scene.prototype.setCanvas = function(canvas) {
 	this.canvas = canvas;
 	this.canvasContext = canvas.getContext('2d');
-	this.canvasContext.fillStyle = '#ffffff';
+	this.canvasContext.fillStyle = '#000000';
 };
 
 Scene.prototype.setTimeout = function(callback, time) {
@@ -60,15 +60,15 @@ Scene.prototype.drawObject = function(dt, drawObject) {
 	if (typeof drawObject.object.getImageCallback !== 'function') {
 		return;
 	}
-	var image = drawObject.object.getImageCallback(dt);
+	
 	drawObject.object.updatePosition(dt);
 
 	this.canvasContext.save();
-	var offsetX = image.width / 2;
-	var offsetY = image.height / 2;
-	this.canvasContext.translate(drawObject.object.x + offsetX, drawObject.object.y + offsetY);
+	var offsetX = drawObject.object.width / 2;
+	var offsetY = drawObject.object.height / 2;
+	this.canvasContext.translate(drawObject.object.x, drawObject.object.y);
 	this.canvasContext.rotate(drawObject.object.rot);
-	this.canvasContext.drawImage(image, -offsetX, -offsetY);
+	this.canvasContext.drawImage(drawObject.object.getImageCallback(dt), -offsetX, -offsetY);
 	this.canvasContext.restore();
 };
 
