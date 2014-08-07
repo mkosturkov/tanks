@@ -8,18 +8,31 @@ CollisionDetector.TRAJECTORY_TYPE_LINEAR = 1;
 CollisionDetector.TRAJECTORY_TYPE_ROTATING = 2;
 
 CollisionDetector.prototype.collidableItems = {};
-CollisionDetector.prototype.nextCollidableId = 0;
 
+CollisionDetector.prototype.addItem = function(movingObject) {
+	return new CollisionDetector.CollidableItem(this, movingObject);	
+};
 
-CollisionDetector.prototype.createLinearTrajectoryItem = function(collidable) {
-	collidable.trajectoryType = CollisionDetector.TRAJECTORY_TYPE_LINEAR;
+CollisionDetector.prototype.removeItem = function(id) {
+	if(this.collidableItems[id]) {
+		this.collidableItems[id].remove();
+	}
+};
+
+CollisionDetector.CollidableItem = function(detector, movingObject) {
+	this.detector = detector;
+	this.movingObject = movingObject;
+	this.id = CollisionDetector.CollidableItem.nextCollidableId++;
+	this.detector.collidableItems[this.id] = this;
+	
+	this.trajectoryType = CollisionDetector.TRAJECTORY_TYPE_LINEAR;
 	
 	// Figure out when the object is going to hit the map edge
 	var times = [
-		collidable.movingObject.getTimeForPosition(0, false),
-		collidable.movingObject.getTimeForPosition(this.sceneWidth, true),
-		collidable.movingObject.getTimeForPosition(this.sceneHeight, false),
-		collidable.movingObject.getTimeForPosition(0, true)
+		this.movingObject.getTimeForPosition(0, false),
+		this.movingObject.getTimeForPosition(this.detector.sceneWidth, true),
+		this.movingObject.getTimeForPosition(this.detector.sceneHeight, false),
+		this.movingObject.getTimeForPosition(0, true)
 	];
 	var trajectoryEndTime;
 	for (var i = 0; i < 4; i++) {
@@ -28,34 +41,18 @@ CollisionDetector.prototype.createLinearTrajectoryItem = function(collidable) {
 		}
 	}
 	
-	new CollisionDetector.CollisionPoint(trajectoryEndTime, this.collisionHandler, collidable);
-	
-	return collidable;
+	new CollisionDetector.CollisionPoint(trajectoryEndTime, this.detector.collisionHandler, this);
 };
 
-CollisionDetector.prototype.createRotatingTrajectoryItem = function(movingObject) {
-	
-};
+CollisionDetector.CollidableItem.nextCollidableId = 0;
 
-CollisionDetector.prototype.addItem = function(movingObject) {
-	// Determine the type of trajectory - linear or rotating
-	var collidable = {};
-	collidable.movingObject = movingObject;
-	collidable.collisionPoints = {};
-	movingObject.rotSpeed === 0 ? this.createLinearTrajectoryItem(collidable) : this.createRotatingTrajectoryItem(collidable);
-	collidable.id = this.nextCollidableId++;
-	this.collidableItems[collidable.id] = collidable;
-	return collidable.id;
-};
+CollisionDetector.CollidableItem.prototype.collisionPoints = {};
 
-CollisionDetector.prototype.removeItem = function(id) {
-	if(!this.collidableItems[id]) {
-		return false;
+CollisionDetector.CollidableItem.prototype.remove = function() {
+	for(var i in this.collisionPoints) {
+		this.collisionPoints[i].cancel();
 	}
-	for(var i in this.collidableItems[id].collisionPoints) {
-		this.collidableItems[id].collisionPoints[i].cancel();
-	}
-	delete this.collidableItems[id];
+	delete this.detector.collidableItems[this.id];
 };
 
 CollisionDetector.CollisionPoint = function(period, callback, colidableA, colidableB) {

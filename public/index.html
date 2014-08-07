@@ -93,7 +93,7 @@
 			}
 			console.log('Hit at ' + (new Date()).getTime());
 		});
-		var coId;
+		var co;
 		
 		var keyCode = 0;
 		document.onkeydown = function(event) {
@@ -116,10 +116,10 @@
 			}
 			if([37, 38, 39, 40].indexOf(event.keyCode) > -1) {
 				event.preventDefault();
-				if(coId) {
-					cd.removeItem(coId);
+				if(co) {
+					co.remove();
 				}
-				coId = cd.addItem(o1);
+				co = cd.addItem(o1);
 			}
 			keyCode = event.keyCode;
 		};
@@ -133,7 +133,9 @@
 			if([37, 38, 39, 40].indexOf(event.keyCode) > -1) {
 				event.preventDefault();
 			}
-			cd.removeItem(coId);
+			if(co) {
+				co.remove();
+			}
 			keyCode = 0;
 			//logEdges();
 		};
