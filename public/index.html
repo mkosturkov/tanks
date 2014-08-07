@@ -84,7 +84,15 @@
 		scene.start();
 		//setTimeout(function() {scene.stop();}, 3100); 
 		
-		var cd = new CollisionDetector(500, 500);
+		var cd = new CollisionDetector(500, 500, function(colidableA, colidableB) {
+			colidableA.movingObject.speed = 0;
+			cd.removeItem(colidableA.id);
+			if(colidableB) {
+				colidableB.movingObject.speed = 0;
+				cd.removeItem(colidableB.id);
+			}
+			console.log('Hit at ' + (new Date()).getTime());
+		});
 		var coId;
 		
 		var keyCode = 0;
