@@ -83,7 +83,7 @@ Geometry.Line.prototype.getCrossPoints = function(line) {
 		x >= this.point1.x && x <= this.point2.x
 		&& x >= line.point1.x && x <= line.point2.x
 		&& y >= Math.min(this.point1.y, this.point2.y) && y <= Math.max(this.point1.y, this.point2.y)
-		&& y >= Math.min(line.point1.y, this.point2.y) && y <= Math.max(line.point1.y, line.point2.y)
+		&& y >= Math.min(line.point1.y, line.point2.y) && y <= Math.max(line.point1.y, line.point2.y)
 	) {
 		return [new Geometry.Point(x, y)];
 	}
