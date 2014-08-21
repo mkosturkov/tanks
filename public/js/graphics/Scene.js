@@ -3,10 +3,10 @@ function Scene(canvas) {
 	if(canvas) {
 		this.setCanvas(canvas);
 	}
+	this.drawObjects = [];
 }
 
 Scene.prototype.lastDrawTime = 0;
-Scene.prototype.drawObjects = [];
 Scene.prototype.drawObjectsNextId = 0;
 Scene.prototype.drawObjectsSorted = false;
 
@@ -56,31 +56,36 @@ Scene.prototype.removeDrawObject = function(id) {
 	return false;
 };
 
-Scene.prototype.drawObject = function(dt, drawObject) {
+Scene.prototype.updatePositions = function() {
+	var currentTime = (new Date()).getTime();
+	var dt = 0;
+	if (this.lastDrawTime > 0) {
+		dt = currentTime - this.lastDrawTime;
+	}
+	this.drawObjects.forEach(function(drawObject) {
+		drawObject.object.updatePosition(dt);
+	});
+	this.lastDrawTime = currentTime;
+};
+
+Scene.prototype.drawObject = function(drawObject) {
 	if (typeof drawObject.object.getImageCallback !== 'function') {
 		return;
 	}
-	
-	drawObject.object.updatePosition(dt);
 
 	this.canvasContext.save();
 	var offsetX = drawObject.object.width / 2;
 	var offsetY = drawObject.object.height / 2;
 	this.canvasContext.translate(drawObject.object.x, drawObject.object.y);
 	this.canvasContext.rotate(drawObject.object.rot);
-	this.canvasContext.drawImage(drawObject.object.getImageCallback(dt), -offsetX, -offsetY);
+	this.canvasContext.drawImage(drawObject.object.getImageCallback(), -offsetX, -offsetY);
 	this.canvasContext.restore();
 };
 
 Scene.prototype.drawFrame = function() {
 	this.canvasContext.fillRect(0, 0, this.canvas.width, this.canvas.height);
-	var currentTime = (new Date()).getTime();
-	var dt = 0;
-	if (this.lastDrawTime > 0) {
-		dt = currentTime - this.lastDrawTime;
-	}
-	this.drawObjects.forEach(this.drawObject.bind(this, dt));
-	this.lastDrawTime = currentTime;
+	this.updatePositions();
+	this.drawObjects.forEach(this.drawObject.bind(this));
 };
 
 Scene.prototype.start = function() {

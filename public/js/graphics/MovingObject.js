@@ -44,6 +44,22 @@ MovingObject.prototype.stopRotating = function() {
 	this.rotSpeed = 0;
 };
 
+MovingObject.prototype.getPositionInTime = function(dt) {
+	var position = {};
+	position.rot = this.rot + this.rotSpeed * dt;
+	var s = this.speed * dt;
+	position.x = this.x + s * Math.cos(position.rot);
+	position.y = this.y + s * Math.sin(position.rot);
+	return position;
+};
+
+MovingObject.prototype.updatePosition = function(dt) {
+	var position = this.getPositionInTime(dt);
+	this.rot = position.rot;
+	this.x = position.x;
+	this.y = position.y;
+};
+
 MovingObject.prototype.getHalfWidth = function() {
 	if (!this.halfWidth) {
 		this.halfWidth = this.width / 2;
@@ -107,25 +123,39 @@ MovingObject.prototype.edgeCoordinatesFuncs = {
 	}
 };
 
+MovingObject.prototype.getEdgesInTime = function(dt) {
+	var position = this.getPositionInTime(dt);
+	position.width = this.width;
+	position.height = this.height;
+	position.edgeCoordinatesFuncs = this.edgeCoordinatesFuncs;
+	position.getHalfDiagonal = this.getHalfDiagonal;
+	position.getDiagonalAngle = this.getDiagonalAngle;
+	position.getHalfHeight = this.getHalfHeight;
+	
+	var edges = {
+		A: {
+			x: this.getEdge.call(position, 'A', true),
+			y: this.getEdge.call(position, 'A', false)
+		},
+		B: {
+			x: this.getEdge.call(position, 'B', true),
+			y: this.getEdge.call(position, 'B', false)
+		},
+		C: {
+			x: this.getEdge.call(position, 'C', true),
+			y: this.getEdge.call(position, 'C', false)
+		},
+		D: {
+			x: this.getEdge.call(position, 'D', true),
+			y: this.getEdge.call(position, 'D', false)
+		}
+	};
+	return edges;
+};
+
 MovingObject.prototype.getEdge = function(edge, x) {
 	var coord = x ? 'X' : 'Y';
 	return this.edgeCoordinatesFuncs[edge][coord].call(this);
-};
-
-MovingObject.prototype.getPositionInTime = function(dt) {
-	var position = {};
-	position.rot = this.rot + this.rotSpeed * dt;
-	var s = this.speed * dt;
-	position.x = this.x + s * Math.cos(position.rot);
-	position.y = this.y + s * Math.sin(position.rot);
-	return position;
-};
-
-MovingObject.prototype.updatePosition = function(dt) {
-	var position = this.getPositionInTime(dt);
-	this.rot = position.rot;
-	this.x = position.x;
-	this.y = position.y;
 };
 
 MovingObject.prototype.getTimeForPositionLinear = function(value, x) {
@@ -145,10 +175,20 @@ MovingObject.prototype.getTimeForPositionLinear = function(value, x) {
 	return false;
 };
 
+MovingObject.prototype.coversCoordinate = function(value, x) {
+	var a = this.getEdge('A', x);
+	var b = this.getEdge('B', x);
+	var c = this.getEdge('C', x);
+	var d = this.getEdge('D', x);
+	
+	return  (value >= Math.min(a, c) && value <= Math.max(a, c))
+			|| (value >= Math.min(b, d) && value <= Math.max(b, d));
+};
+
 MovingObject.prototype.getTimeForPosition = function(value, x) {
 	if (this.speed === 0 && this.rotSpeed === 0) {
 		// Not moving
-		return false;
+		return this.coversCoordinate(value, x) ? 0 : false;
 	}
 	if (Math.abs(this.speed) > 0 && this.rotSpeed === 0) {
 		// Linear movement
@@ -158,4 +198,5 @@ MovingObject.prototype.getTimeForPosition = function(value, x) {
 
 	}
 };
+
 

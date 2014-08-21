@@ -4,6 +4,7 @@
     <title>Tanks tester</title>
     <script src="js/graphics/Scene.js"></script>
     <script src="js/graphics/MovingObject.js"></script>
+	<script src="js/graphics/Geometry.js"></script>
 	<script src="js/graphics/CollisionDetector.js"></script>
   </head>
   <body>
@@ -27,7 +28,7 @@
 		var scene = new Scene();
 		scene.setCanvas(canvas);
 		var c1 = document.createElement('canvas');
-		c1.width = 100;
+		c1.width = 200;
 		c1.height = 100;
 		var ctc1 = c1.getContext('2d');
 		ctc1.fillStyle = '#00ff00';
@@ -89,10 +90,11 @@
 			cd.removeItem(colidableA.id);
 			if(colidableB) {
 				colidableB.movingObject.speed = 0;
-				cd.removeItem(colidableB.id);
+				//cd.removeItem(colidableB.id);
 			}
 			console.log('Hit at ' + (new Date()).getTime());
-		});
+		}, scene);
+		cd.addItem(o2);
 		var co;
 		
 		var keyCode = 0;
@@ -117,7 +119,7 @@
 			if([37, 38, 39, 40].indexOf(event.keyCode) > -1) {
 				event.preventDefault();
 				if(co) {
-					co.remove();
+					cd.removeItem(co);
 				}
 				co = cd.addItem(o1);
 			}
@@ -134,7 +136,7 @@
 				event.preventDefault();
 			}
 			if(co) {
-				co.remove();
+				cd.removeItem(co);
 			}
 			keyCode = 0;
 			//logEdges();
