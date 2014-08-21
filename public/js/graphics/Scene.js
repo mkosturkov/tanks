@@ -39,7 +39,7 @@ Scene.prototype.addDrawObject = function(drawObject) {
 		id: id
 	});
 	if (this.intervalHandler) {
-		sortDrawObjects();
+		this.sortDrawObjects();
 	} else {
 		this.drawObjectsSorted = false;
 	}
