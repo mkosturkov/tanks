@@ -23,9 +23,9 @@ CollisionDetector.prototype.getCollisionInPointTime = function(point, movingObje
 	var t1 = new Geometry.Triangle(fl1.point1, fl1.point2, point);
 	var dt = movingObject1.getTimeForDistance(t1.getAltitude('C'));
 	
-	var fl2 = movingObject1.getFrontLine();
+	var fl2 = movingObject2.getFrontLine();
 	var t2 = new Geometry.Triangle(fl2.point1, fl2.point2, point);
-	var dt2 = movingObject1.getTimeForDistance(t2.getAltitude('C'));
+	var dt2 = movingObject2.getTimeForDistance(t2.getAltitude('C'));
 	
 	var minDt = Math.min(dt, dt2);
 	var maxDt = Math.max(dt, dt2);
