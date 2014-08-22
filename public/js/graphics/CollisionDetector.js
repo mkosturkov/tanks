@@ -43,18 +43,37 @@ CollisionDetector.prototype.addItem = function(movingObject) {
 	var item = new CollisionDetector.CollidableItem(this, movingObject);
 	this.scene.updatePositions();
 	
+	var frontLine = movingObject.getFrontLine();
+	
 	// Walk through all the current collidables and check for intersections
 	for(var x in this.collidableItems) {
-		if(this.collidableItems[x] === item) {
+		if(this.collidableItems[x] === item) {	// No need to check for collisions with itself
 			continue;
 		}
+		
+		var times = [];
+		
+		// Check if the item's front (that is the side moving forward)
+		// will hit any of the other item's edges
+		var halfPI = Math.PI / 2;
+		['A', 'B', 'C', 'D'].forEach(function(pointName) {
+			var triangle = new Geometry.Triangle(
+				frontLine.point1, 
+				frontLine.point2,
+				this.collidableItems[x].plane.points[pointName]
+			);
+			if(triangle.getAngle('A') <= halfPI && triangle.getAngle('B') <= halfPI) { // front colides with edge
+				times.push(movingObject.getTimeForDistance(triangle.getAltitude('C')));
+			}
+		}, this);
+		
+		// Check if the item's edges hit any of the other item's sides
 		var crossPoints = this.collidableItems[x].plane.getCrossPoints(item.plane);
 		if(crossPoints.length === 0) {
 			continue; // no intersections
 		}
 		
 		// Find the times for all intersections and select the closest to set a collision point
-		var times = [];
 		for(var i = 0; i < crossPoints.length; i++) {
 			var time = this.getCollisionInPointTime(crossPoints[i], movingObject, this.collidableItems[x].movingObject);
 			if(time !== false) {

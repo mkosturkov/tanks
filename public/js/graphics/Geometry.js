@@ -33,6 +33,13 @@ Geometry.Line.prototype.getB = function() {
 	return this.b;
 };
 
+Geometry.Line.prototype.getLength = function() {
+	if(this.length === undefined) {
+		this.length = Math.sqrt(Math.pow(this.point2.x - this.point1.x, 2) + Math.pow(this.point2.y - this.point1.y, 2));
+	}
+	return this.length;
+};
+
 Geometry.Line.prototype.getCrossPoints = function(line) {
 	if(this.getA() === line.getA()) {
 		if(this.getB() !== line.getB() && Math.abs(this.getA()) !== Infinity) {
@@ -89,6 +96,74 @@ Geometry.Line.prototype.getCrossPoints = function(line) {
 	}
 	// Outside of the given boundaries of the lines
 	return false;
+};
+
+Geometry.Triangle = function(A, B, C) {
+	this.A = A;
+	this.B = B;
+	this.C = C;
+	
+	this.lines = {
+		AB: new Geometry.Line(A, B),
+		BC: new Geometry.Line(B, C),
+		AC: new Geometry.Line(A, C)
+	};
+	
+	this.angles = {};
+	this.altitudes = {};
+};
+
+Geometry.Triangle.prototype.getAngle = function(angleName) {
+	switch (angleName) {
+		case 'A':
+			var a = this.lines.BC;
+			var b = this.lines.AC;
+			var c = this.lines.AB;
+			break;
+		case 'B':
+			var a = this.lines.AC;
+			var b = this.lines.AB;
+			var c = this.lines.BC;
+			break;
+		case 'C':
+			var a = this.lines.AB;
+			var b = this.lines.AC;
+			var c = this.lines.BC;
+			break;
+		default:
+			throw 'Unknown angle';
+	}
+	if(this.angles[angleName] === undefined) {
+		this.angles[angleName] = Math.acos(
+			(Math.pow(b.getLength(), 2) + Math.pow(c.getLength(), 2) - Math.pow(a.getLength(), 2)) /
+			(2 * b.getLength() * c.getLength())
+		);
+	}
+	return this.angles[angleName];
+};
+
+Geometry.Triangle.prototype.getAltitude = function(angleName) {
+	switch (angleName) {
+		case 'A':
+			var side = this.lines.BC;
+			break;
+		case 'B':
+			var side = this.lines.AC;
+			break;
+		case 'C':
+			var side = this.lines.AB;
+			break;
+		default:
+			throw 'Unknown angle';
+	}
+	if(this.altitudes[angleName] === undefined) {
+		var a = this.lines.BC.getLength();
+		var b = this.lines.AC.getLength();
+		var c = this.lines.AB.getLength();
+		var s = (a + b + c) / 2;
+		this.altitudes[angleName] = 2 * Math.sqrt(s * (s - a) * (s - b) * (s - c)) / side.getLength();
+	}
+	return this.altitudes[angleName];
 };
 
 Geometry.Rectangle = function (A, B, C, D) {

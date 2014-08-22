@@ -155,7 +155,7 @@ MovingObject.prototype.getEdgesInTime = function(dt) {
 
 MovingObject.prototype.getEdge = function(edge, x) {
 	var coord = x ? 'X' : 'Y';
-	return this.edgeCoordinatesFuncs[edge][coord].call(this);
+	return Math.round(this.edgeCoordinatesFuncs[edge][coord].call(this));
 };
 
 MovingObject.prototype.getTimeForPositionLinear = function(value, x) {
@@ -199,4 +199,22 @@ MovingObject.prototype.getTimeForPosition = function(value, x) {
 	}
 };
 
+MovingObject.prototype.getTimeForDistance = function(distance) {
+	return distance / Math.abs(this.speed);
+};
+
+MovingObject.prototype.getEdgePoint = function(edgeName) {
+	return new Geometry.Point(this.getEdge(edgeName, true), this.getEdge(edgeName, false));
+};
+
+MovingObject.prototype.getFrontLine = function() {
+	if(this.speed < 0) {
+		var point1 = this.getEdgePoint('A');
+		var point2 = this.getEdgePoint('D');
+	} else {
+		var point1 = this.getEdgePoint('B');
+		var point2 = this.getEdgePoint('C');
+	}
+	return new Geometry.Line(point1, point2);
+};
 
