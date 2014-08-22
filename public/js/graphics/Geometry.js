@@ -5,6 +5,10 @@ Geometry.Point = function(x, y) {
 	this.y = y;
 };
 
+Geometry.Point.prototype.getDistanceToPoint = function(point) {
+	return Math.sqrt(Math.pow(this.x - point.x, 2) + Math.pow(this.y - point.y, 2));
+};
+
 Geometry.Line = function(point1, point2) {
 	if(point1.x < point2.x) {
 		this.point1 = point1;
@@ -35,7 +39,7 @@ Geometry.Line.prototype.getB = function() {
 
 Geometry.Line.prototype.getLength = function() {
 	if(this.length === undefined) {
-		this.length = Math.sqrt(Math.pow(this.point2.x - this.point1.x, 2) + Math.pow(this.point2.y - this.point1.y, 2));
+		this.length = this.point1.getDistanceToPoint(this.point2);
 	}
 	return this.length;
 };
