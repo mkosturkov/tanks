@@ -19,14 +19,13 @@ CollisionDetector.prototype.haveCollisionInTime = function(dt, movingObject1, mo
 };
 
 CollisionDetector.prototype.getCollisionInPointTime = function(point, movingObject1, movingObject2) {
-	var dt = movingObject1.getTimeForPosition(point.x, true);
-	if(dt === false) {
-		return false;
-	}
-	var dt2 = movingObject2.getTimeForPosition(point.x, true);
-	if(dt2 === false) {
-		return false;
-	}
+	var fl1 = movingObject1.getFrontLine();
+	var t1 = new Geometry.Triangle(fl1.point1, fl1.point2, point);
+	var dt = movingObject1.getTimeForDistance(t1.getAltitude('C'));
+	
+	var fl2 = movingObject1.getFrontLine();
+	var t2 = new Geometry.Triangle(fl2.point1, fl2.point2, point);
+	var dt2 = movingObject1.getTimeForDistance(t2.getAltitude('C'));
 	
 	var minDt = Math.min(dt, dt2);
 	var maxDt = Math.max(dt, dt2);
