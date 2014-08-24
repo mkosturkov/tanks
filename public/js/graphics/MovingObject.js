@@ -123,7 +123,7 @@ MovingObject.prototype.edgeCoordinatesFuncs = {
 	}
 };
 
-MovingObject.prototype.getEdgesInTime = function(dt) {
+MovingObject.prototype.getPlaneInTime = function(dt) {
 	var position = this.getPositionInTime(dt);
 	position.width = this.width;
 	position.height = this.height;
@@ -132,26 +132,14 @@ MovingObject.prototype.getEdgesInTime = function(dt) {
 	position.getDiagonalAngle = this.getDiagonalAngle;
 	position.getHalfHeight = this.getHalfHeight;
 	
-	var edges = {
-		A: {
-			x: this.getEdge.call(position, 'A', true),
-			y: this.getEdge.call(position, 'A', false)
-		},
-		B: {
-			x: this.getEdge.call(position, 'B', true),
-			y: this.getEdge.call(position, 'B', false)
-		},
-		C: {
-			x: this.getEdge.call(position, 'C', true),
-			y: this.getEdge.call(position, 'C', false)
-		},
-		D: {
-			x: this.getEdge.call(position, 'D', true),
-			y: this.getEdge.call(position, 'D', false)
-		}
-	};
-	return edges;
+	return new Geometry.Rectangle(
+		new Geometry.Point(this.getEdge.call(position, 'A', true), this.getEdge.call(position, 'A', false)),
+		new Geometry.Point(this.getEdge.call(position, 'B', true), this.getEdge.call(position, 'B', false)),
+		new Geometry.Point(this.getEdge.call(position, 'C', true), this.getEdge.call(position, 'C', false)),
+		new Geometry.Point(this.getEdge.call(position, 'D', true), this.getEdge.call(position, 'D', false))
+	);
 };
+
 
 MovingObject.prototype.getEdge = function(edge, x) {
 	var coord = x ? 'X' : 'Y';
