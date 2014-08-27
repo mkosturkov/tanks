@@ -206,3 +206,8 @@ MovingObject.prototype.getFrontLine = function() {
 	return new Geometry.Line(point1, point2);
 };
 
+MovingObject.prototype.getTimeToPoint = function(point) {
+	return this.getTimeForDistance(this.getFrontLine().getDistanceToPoint(point));
+};
+
+

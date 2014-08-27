@@ -44,13 +44,17 @@ Geometry.Line.prototype.getLength = function() {
 	return this.length;
 };
 
-Geometry.Line.prototype.getCrossPoints = function(line) {
+Geometry.Line.prototype.getCrossPoints = function(line, ignoreLengths) {
 	if(this.getA() === line.getA()) {
 		if(this.getB() !== line.getB() && Math.abs(this.getA()) !== Infinity) {
 			// Lines are paralel
 			return false;
 		}
-		// Lines match. Check if they cover each other
+		// Lines match
+		if(!ignoreLengths) {
+			return Infinity;
+		}
+		// Check if they cover each other
 		if(this.point1.x < line.point1.x) {
 			var leftLine = this;
 			var rightLine = line;
@@ -62,16 +66,8 @@ Geometry.Line.prototype.getCrossPoints = function(line) {
 			// They do not cover
 			return false;
 		}
-		// They cover. Find the leftmost and rightmost common points
-		var points = [new Geometry.Point(rightLine.point1.x, rightLine.point1.y)];
-		if(leftLine.point2.x <= rightLine.point2.x) {
-			// Left line ends somewhere on right line
-			points.push(new Geometry.Point(leftLine.point2.x, leftLine.point2.y));
-		} else {
-			// Right line is showrter than left line. Right line ends on left line
-			points.push(new Geometry.Point(rightLine.point2.x, rightLine.point2.y));
-		}
-		return points;
+		// They cover
+		return Infinity;
 	}
 	
 	// Lines cross
@@ -91,47 +87,77 @@ Geometry.Line.prototype.getCrossPoints = function(line) {
 	
 	// Check if the cross point is in the range of the lines
 	if(
-		x >= this.point1.x && x <= this.point2.x
-		&& x >= line.point1.x && x <= line.point2.x
-		&& y >= Math.min(this.point1.y, this.point2.y) && y <= Math.max(this.point1.y, this.point2.y)
-		&& y >= Math.min(line.point1.y, line.point2.y) && y <= Math.max(line.point1.y, line.point2.y)
+		ignoreLengths || (
+			x >= this.point1.x && x <= this.point2.x
+			&& x >= line.point1.x && x <= line.point2.x
+			&& y >= Math.min(this.point1.y, this.point2.y) && y <= Math.max(this.point1.y, this.point2.y)
+			&& y >= Math.min(line.point1.y, line.point2.y) && y <= Math.max(line.point1.y, line.point2.y)
+		)
 	) {
-		return [new Geometry.Point(x, y)];
+		return new Geometry.Point(x, y);
 	}
 	// Outside of the given boundaries of the lines
 	return false;
 };
 
+Geometry.Line.prototype.getDistanceToPoint = function(point) {
+	return (new Geometry.Triangle(this.point1, this.point2, point)).getAltitude('C');
+};
+
+Geometry.Line.prototype.getAngle = function(line) {
+	return Math.PI - Math.atan(this.getA()) - Math.atan(line.getA());
+};
+
+Geometry.Plane = function() {
+	var letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R'];
+	this.points = {};
+	this.lines = {};
+	for (var i = 0; i < arguments.length; i++) {
+		this.points[letters[i]] = arguments[i];
+		if(i + 1 === arguments.length) {
+			this.lines[letters[i] + letters[0]] = new Geometry.Line(arguments[i], arguments[0]);
+		} else {
+			this.lines[letters[i] + letters[i + 1]] = new Geometry.Line(arguments[i], arguments[i + 1]);
+		}
+	}
+};
+
+Geometry.Plane.prototype.getCrossPoints = function(plane) {
+	var points = [];
+	for(var i in this.lines) {
+		for(var j in plane.lines) {
+			var crossPoints = this.lines[i].getCrossPoints(plane.lines[j]);
+			if(crossPoints !== false) {
+				points.push(crossPoints);
+			}
+		}
+	}
+	return points;
+};
+
 Geometry.Triangle = function(A, B, C) {
-	this.A = A;
-	this.B = B;
-	this.C = C;
-	
-	this.lines = {
-		AB: new Geometry.Line(A, B),
-		BC: new Geometry.Line(B, C),
-		AC: new Geometry.Line(A, C)
-	};
-	
+	Geometry.Plane.call(this, A, B, C);
 	this.angles = {};
 	this.altitudes = {};
 };
+
+Geometry.Triangle.prototype = new Geometry.Plane();
 
 Geometry.Triangle.prototype.getAngle = function(angleName) {
 	switch (angleName) {
 		case 'A':
 			var a = this.lines.BC;
-			var b = this.lines.AC;
+			var b = this.lines.CA;
 			var c = this.lines.AB;
 			break;
 		case 'B':
-			var a = this.lines.AC;
+			var a = this.lines.CA;
 			var b = this.lines.AB;
 			var c = this.lines.BC;
 			break;
 		case 'C':
 			var a = this.lines.AB;
-			var b = this.lines.AC;
+			var b = this.lines.CA;
 			var c = this.lines.BC;
 			break;
 		default:
@@ -152,7 +178,7 @@ Geometry.Triangle.prototype.getAltitude = function(angleName) {
 			var side = this.lines.BC;
 			break;
 		case 'B':
-			var side = this.lines.AC;
+			var side = this.lines.CA;
 			break;
 		case 'C':
 			var side = this.lines.AB;
@@ -162,7 +188,7 @@ Geometry.Triangle.prototype.getAltitude = function(angleName) {
 	}
 	if(this.altitudes[angleName] === undefined) {
 		var a = this.lines.BC.getLength();
-		var b = this.lines.AC.getLength();
+		var b = this.lines.CA.getLength();
 		var c = this.lines.AB.getLength();
 		var s = (a + b + c) / 2;
 		this.altitudes[angleName] = 2 * Math.sqrt(s * (s - a) * (s - b) * (s - c)) / side.getLength();
@@ -171,27 +197,39 @@ Geometry.Triangle.prototype.getAltitude = function(angleName) {
 };
 
 Geometry.Rectangle = function (A, B, C, D) {
-	
-	this.points = {A: A, B: B, C: C, D: D};
-	
-	this.lines = {
-		AB: new Geometry.Line(A, B),
-		BC: new Geometry.Line(B, C),
-		CD: new Geometry.Line(C, D),
-		DA: new Geometry.Line(D, A)
-	};
-	
+	Geometry.Plane.call(this, A, B, C, D);
 };
 
-Geometry.Rectangle.prototype.getCrossPoints = function(plane) {
-	var points = [];
-	for(var i in this.lines) {
-		for(var j in plane.lines) {
-			var crossPoints = this.lines[i].getCrossPoints(plane.lines[j]);
-			if(crossPoints !== false) {
-				points = points.concat(crossPoints);
-			}
+Geometry.Rectangle.prototype = new Geometry.Plane();
+
+Geometry.Rectangle.prototype.containsPoint = function(point) {
+	var data = [
+		{
+			pointA: this.points.A,
+			pointB: this.points.B,
+			side: this.lines.BC 
+		},
+		{
+			pointA: this.points.C,
+			pointB: this.points.D,
+			side: this.lines.BC
+		},
+		{
+			pointA: this.points.B,
+			pointB: this.points.C,
+			side: this.lines.AB
+		},
+		{
+			pointA: this.points.A,
+			pointB: this.points.D,
+			side: this.lines.AB
+		}
+	];
+	for(var i = 0; i < data.length; i++) {
+		var triangle = new Geometry.Triangle(data[i].pointA, data[i].pointB, point);
+		if(triangle.getAltitude('C') > data[i].side.getLength()) {
+			return false;
 		}
 	}
-	return points;
+	return true;
 };
