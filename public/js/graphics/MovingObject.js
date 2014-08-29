@@ -195,15 +195,17 @@ MovingObject.prototype.getEdgePoint = function(edgeName) {
 	return new Geometry.Point(this.getEdge(edgeName, true), this.getEdge(edgeName, false));
 };
 
+MovingObject.prototype.getFrontEdgesNames = function() {
+	return this.speed < 0 ? ['A', 'D'] : ['B', 'C'];
+};
+
+MovingObject.prototype.getBackEdgesNames = function() {
+	return this.speed >= 0 ? ['A', 'D'] : ['B', 'C'];
+};
+
 MovingObject.prototype.getFrontLine = function() {
-	if(this.speed < 0) {
-		var point1 = this.getEdgePoint('A');
-		var point2 = this.getEdgePoint('D');
-	} else {
-		var point1 = this.getEdgePoint('B');
-		var point2 = this.getEdgePoint('C');
-	}
-	return new Geometry.Line(point1, point2);
+	var edgeNames = this.getFrontEdgesNames();
+	return new Geometry.Line(this.getEdgePoint(edgeNames[0]), this.getEdgePoint(edgeNames[1]));
 };
 
 MovingObject.prototype.getTimeToPoint = function(point) {

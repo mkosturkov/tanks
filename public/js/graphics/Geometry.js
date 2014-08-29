@@ -104,8 +104,10 @@ Geometry.Line.prototype.getDistanceToPoint = function(point) {
 	return (new Geometry.Triangle(this.point1, this.point2, point)).getAltitude('C');
 };
 
-Geometry.Line.prototype.getAngle = function(line) {
-	return Math.PI - Math.atan(this.getA()) - Math.atan(line.getA());
+Geometry.Line.prototype.getAngle = function(line) {	
+	var a = Math.atan(this.getA());
+	var b = Math.atan(line.getA());
+	return a > b ? a - b : b - a;
 };
 
 Geometry.Plane = function() {
