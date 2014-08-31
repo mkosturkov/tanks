@@ -1,14 +1,31 @@
 'use strict';
-function Scene(canvas) {
+function Scene(timerFunctions, canvas) {
+	MovingObjectsUpdater.call(this);
+	this.timerFunctions = timerFunctions;
 	if(canvas) {
 		this.setCanvas(canvas);
 	}
-	this.drawObjects = [];
 }
 
-Scene.prototype.lastDrawTime = 0;
-Scene.prototype.drawObjectsNextId = 0;
-Scene.prototype.drawObjectsSorted = false;
+Scene.prototype = new MovingObjectsUpdater();
+
+Scene.prototype.objectsSorted = false;
+
+Scene.prototype.sortObjects = function() {
+	this.bjects.sort(function(a, b) {
+		return a.z > b.z ? 1 : -1;
+	});
+	this.objectsSorted = true;
+};
+
+Scene.prototype.addObject = function(object) {
+	MovingObjectsUpdater.addObject.call(this, object);
+	if (this.intervalHandler) {
+		this.sortObjects();
+	} else {
+		this.objectsSorted = false;
+	}
+};
 
 Scene.prototype.setCanvas = function(canvas) {
 	this.canvas = canvas;
@@ -16,63 +33,7 @@ Scene.prototype.setCanvas = function(canvas) {
 	this.canvasContext.fillStyle = '#000000';
 };
 
-Scene.prototype.setTimeout = function(callback, time) {
-};
-Scene.prototype.setInterval = function(callback, interval) {
-};
-Scene.prototype.clearTimeout = function(timeoutId) {
-};
-Scene.prototype.clearInterval = function(intervalId) {
-};
-
-Scene.prototype.sortDrawObjects = function() {
-	this.drawObjects.sort(function(a, b) {
-		return a.z > b.z ? 1 : -1;
-	});
-	this.drawObjectsSorted = true;
-};
-
-Scene.prototype.addDrawObject = function(drawObject) {
-	var id = this.drawObjectsNextId++;
-	this.drawObjects.push({
-		object: drawObject,
-		id: id
-	});
-	if (this.intervalHandler) {
-		this.sortDrawObjects();
-	} else {
-		this.drawObjectsSorted = false;
-	}
-	return id;
-};
-
-Scene.prototype.removeDrawObject = function(id) {
-	for (var i = 0; i < this.drawObjects.length; i++) {
-		if (this.drawObjects[i].id === id) {
-			this.drawObjects.splice(i, 1);
-			return true;
-		}
-	}
-	return false;
-};
-
-Scene.prototype.updatePositions = function() {
-	var currentTime = (new Date()).getTime();
-	var dt = 0;
-	if (this.lastDrawTime > 0) {
-		dt = currentTime - this.lastDrawTime;
-	}
-	this.drawObjects.forEach(function(drawObject) {
-		drawObject.object.updatePosition(dt);
-	});
-	this.lastDrawTime = currentTime;
-};
-
 Scene.prototype.drawObject = function(drawObject) {
-	if (typeof drawObject.object.getImageCallback !== 'function') {
-		return;
-	}
-
 	this.canvasContext.save();
 	var offsetX = drawObject.object.width / 2;
 	var offsetY = drawObject.object.height / 2;
@@ -89,14 +50,14 @@ Scene.prototype.drawFrame = function() {
 };
 
 Scene.prototype.start = function() {
-	if (!this.drawObjectsSorted) {
-		this.sortDrawObjects();
+	if (!this.objectsSorted) {
+		this.sortObjects();
 	}
-	this.intervalHandler = this.setInterval(this.drawFrame.bind(this), 20);
+	this.intervalHandler = this.timerFunctions.setInterval(this.drawFrame.bind(this), 20);
 };
 
 Scene.prototype.stop = function() {
-	this.clearInterval(intervalHandler);
+	this.timerFunctions.clearInterval(this.intervalHandler);
 	this.intervalHandler = null;
 };
 	
