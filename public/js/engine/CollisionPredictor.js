@@ -5,7 +5,7 @@ function CollisionPredictor(sceneWidth, sceneHeight, collisionHandler, scene) {
 	this.collisionHandler = collisionHandler;
 	this.scene = scene;
 	
-	this.collidableItems = {};
+	this.collisionTrajectories = {};
 }
 
 CollisionPredictor.TRAJECTORY_TYPE_LINEAR = 1;
@@ -102,11 +102,11 @@ CollisionPredictor.prototype.getCollisionTimes = function(incomming, target) {
 
 CollisionPredictor.prototype.addItem = function(movingObject) {
 	this.scene.updatePositions();
-	var item = new CollisionPredictor.CollidableItem(this, movingObject);
+	var item = new CollisionPredictor.CollisionTrajectory(this, movingObject);
 	
 	// Walk through all the current collidables and check for intersections
-	for(var x in this.collidableItems) {
-		var item2 = this.collidableItems[x];
+	for(var x in this.collisionTrajectories) {
+		var item2 = this.collisionTrajectories[x];
 		if(item2 === item) {	// No need to check for collisions with itself
 			continue;
 		}
@@ -118,7 +118,7 @@ CollisionPredictor.prototype.addItem = function(movingObject) {
 				Math.min.apply(Math, times),
 				this.collisionHandler,
 				item,
-				this.collidableItems[x]
+				this.collisionTrajectories[x]
 			);
 		}
 	}
@@ -126,16 +126,16 @@ CollisionPredictor.prototype.addItem = function(movingObject) {
 };
 
 CollisionPredictor.prototype.removeItem = function(id) {
-	if(this.collidableItems[id]) {
-		this.collidableItems[id].remove();
+	if(this.collisionTrajectories[id]) {
+		this.collisionTrajectories[id].remove();
 	}
 };
 
-CollisionPredictor.CollidableItem = function(detector, movingObject) {
+CollisionPredictor.CollisionTrajectory = function(detector, movingObject) {
 	this.detector = detector;
 	this.movingObject = movingObject;
-	this.id = CollisionPredictor.CollidableItem.nextCollidableId++;
-	this.detector.collidableItems[this.id] = this;
+	this.id = CollisionPredictor.CollisionTrajectory.nextCollidableId++;
+	this.detector.collisionTrajectories[this.id] = this;
 	this.collisionPoints = {};
 	
 	this.trajectoryType = CollisionPredictor.TRAJECTORY_TYPE_LINEAR;
@@ -224,13 +224,13 @@ CollisionPredictor.CollidableItem = function(detector, movingObject) {
 	}
 };
 
-CollisionPredictor.CollidableItem.nextCollidableId = 0;
+CollisionPredictor.CollisionTrajectory.nextCollidableId = 0;
 
-CollisionPredictor.CollidableItem.prototype.remove = function() {
+CollisionPredictor.CollisionTrajectory.prototype.remove = function() {
 	for(var i in this.collisionPoints) {
 		this.collisionPoints[i].cancel();
 	}
-	delete this.detector.collidableItems[this.id];
+	delete this.detector.collisionTrajectories[this.id];
 };
 
 
