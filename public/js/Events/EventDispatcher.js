@@ -1,3 +1,4 @@
+'use strict';
 function EventDispatcher() {
 	this.handlers = {};
 	this.reverseMap = {};

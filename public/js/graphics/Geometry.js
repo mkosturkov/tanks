@@ -1,3 +1,4 @@
+'use strict';
 Geometry = {};
 
 Geometry.Point = function(x, y) {

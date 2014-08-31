@@ -1,3 +1,4 @@
+'use strict';
 function CollisionDetector(sceneWidth, sceneHeight, collisionHandler, scene) {
 	this.sceneWidth = sceneWidth;
 	this.sceneHeight = sceneHeight;
