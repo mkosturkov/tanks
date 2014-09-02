@@ -1,8 +1,12 @@
 'use strict';
-function MovingObject() {
-
+function MovingObject(id) {
+	if(id === undefined) {
+		id = MovingObject.nextObjectId++;
+	}
+	this.id = id;
 }
 
+MovingObject.nextObjectId = 0;
 MovingObject.X = 'X';
 MovingObject.Y = 'Y';
 
@@ -10,6 +14,7 @@ MovingObject.prototype.config = {
 	speed: 0,
 	rotSpeed: 0
 };
+
 MovingObject.prototype.width = 0;
 MovingObject.prototype.height = 0;
 MovingObject.prototype.x = 0;
