@@ -1,9 +1,8 @@
 'use strict';
-function KeyboardController(playerId, keyMap, eventDispatcher, document) {
+function KeyboardController(playerId, keyMap, eventDispatcher) {
 	this.playerId = playerId;
 	this.keyMap = keyMap;
 	this.eventDispatcher = eventDispatcher;
-	this.document = document;
 	this.depressedKeys = {};
 }
 
@@ -16,8 +15,8 @@ KeyboardController.prototype.handleKeyDown = function(event) {
 	}
 	this.depressedKeys[event.keyCode] = true;
 	this.eventDispatcher.fireEvent(
-		this.keyMap[event.keyCode].eventData.down.eventNamespace,
-		this.keyMap[event.keyCode].eventData.down.eventName,
+		this.keyMap[event.keyCode].down.eventNamespace,
+		this.keyMap[event.keyCode].down.eventName,
 		{
 			playerId: this.playerId,
 			data: this.keyMap[event.keyCode].down.data
@@ -33,8 +32,8 @@ KeyboardController.prototype.handleKeyUp = function(event) {
 		return;
 	}
 	this.eventDispatcher.fireEvent(
-		this.keyMap[event.keyCode].eventData.up.eventNamespace,
-		this.keyMap[event.keyCode].eventData.up.eventName,
+		this.keyMap[event.keyCode].up.eventNamespace,
+		this.keyMap[event.keyCode].up.eventName,
 		{
 			playerId: this.playerId,
 			data: this.keyMap[event.keyCode].up.data
@@ -45,16 +44,16 @@ KeyboardController.prototype.handleKeyUp = function(event) {
 KeyboardController.prototype.bind = function() {
 	this.bindedDownHandler = this.handleKeyDown.bind(this);
 	this.bindedUpHandler = this.handleKeyUp.bind(this);
-	this.document.addEventListener('keydown', this.bindedDownHandler);
-	this.document.addEventListener('keyup', this.bindedUpHandler);
+	KeyboardController.document.addEventListener('keydown', this.bindedDownHandler);
+	KeyboardController.document.addEventListener('keyup', this.bindedUpHandler);
 };
 
 KeyboardController.prototype.unbind = function() {
 	if(this.bindedDownHandler === undefined) {
 		return;
 	}
-	this.document.removeEventListner('keydown', this.bindedDownHandler);
-	this.document.removeEventListner('keyup', this.bindedUpHandler);
+	KeyboardController.document.removeEventListner('keydown', this.bindedDownHandler);
+	KeyboardController.document.removeEventListner('keyup', this.bindedUpHandler);
 	delete this.bindedDownHandler;
 	delete this.bindedUpHandler;
 };

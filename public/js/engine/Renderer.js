@@ -1,7 +1,6 @@
 'use strict';
-function Renderer(timerFunctions, canvas) {
+function Renderer(canvas) {
 	MovingObjectsUpdater.call(this);
-	this.timerFunctions = timerFunctions;
 	if(canvas) {
 		this.setCanvas(canvas);
 	}
@@ -12,19 +11,20 @@ Renderer.prototype = new MovingObjectsUpdater();
 Renderer.prototype.objectsSorted = false;
 
 Renderer.prototype.sortObjects = function() {
-	this.bjects.sort(function(a, b) {
+	this.objects.sort(function(a, b) {
 		return a.z > b.z ? 1 : -1;
 	});
 	this.objectsSorted = true;
 };
 
 Renderer.prototype.addObject = function(object) {
-	MovingObjectsUpdater.addObject.call(this, object);
+	var id = MovingObjectsUpdater.prototype.addObject.call(this, object);
 	if (this.intervalHandler) {
 		this.sortObjects();
 	} else {
 		this.objectsSorted = false;
 	}
+	return id;
 };
 
 Renderer.prototype.setCanvas = function(canvas) {
@@ -46,18 +46,18 @@ Renderer.prototype.drawObject = function(drawObject) {
 Renderer.prototype.drawFrame = function() {
 	this.canvasContext.fillRect(0, 0, this.canvas.width, this.canvas.height);
 	this.updatePositions();
-	this.drawObjects.forEach(this.drawObject.bind(this));
+	this.objects.forEach(this.drawObject.bind(this));
 };
 
 Renderer.prototype.start = function() {
 	if (!this.objectsSorted) {
 		this.sortObjects();
 	}
-	this.intervalHandler = this.timerFunctions.setInterval(this.drawFrame.bind(this), 20);
+	this.intervalHandler = Renderer.timerFunctions.setInterval(this.drawFrame.bind(this), 20);
 };
 
 Renderer.prototype.stop = function() {
-	this.timerFunctions.clearInterval(this.intervalHandler);
+	Renderer.timerFunctions.clearInterval(this.intervalHandler);
 	this.intervalHandler = null;
 };
 	

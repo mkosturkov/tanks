@@ -7,7 +7,7 @@ MovingObjectsUpdater.prototype.nextObjectId = 0;
 
 MovingObjectsUpdater.prototype.addObject = function(object) {
 	var id = this.nextObjectId++;
-	this.drawObjects.push({
+	this.objects.push({
 		object: object,
 		id: id
 	});

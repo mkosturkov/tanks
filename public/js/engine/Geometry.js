@@ -1,5 +1,5 @@
 'use strict';
-Geometry = {};
+var Geometry = {};
 
 Geometry.Point = function(x, y) {
 	this.x = x;

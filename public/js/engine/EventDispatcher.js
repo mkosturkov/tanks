@@ -53,11 +53,12 @@ EventDispatcher.prototype.removeHandler = function(id) {
 	delete this.reverseMap[id];
 };
 
-EventDispatcher.prototype.fireEvent = function(eventNamespace, eventName, eventData, eventTime) {
+EventDispatcher.prototype.fireEvent = function(eventNamespace, eventName, eventData, playerId, eventTime) {
 	var event = {
 		namespace: eventNamespace,
 		name: eventName,
-		data: eventData
+		data: eventData,
+		playerId: playerId
 	};
 	if(eventTime !== undefined) {
 		event.eventTime = eventTime;
@@ -67,7 +68,7 @@ EventDispatcher.prototype.fireEvent = function(eventNamespace, eventName, eventD
 	// Fire global event handlers
 	if(this.handlers['*'] !== undefined) {
 		for(var id in this.handlers['*']) {
-			this.handlers['x'][id](event);
+			this.handlers['*'][id](event);
 		}
 	}
 	if(this.handlers[eventNamespace] === undefined) {
@@ -82,7 +83,7 @@ EventDispatcher.prototype.fireEvent = function(eventNamespace, eventName, eventD
 	// Fire specific event event handlers
 	if(this.handlers[eventNamespace][eventName] !== undefined) {
 		for(var id in this.handlers[eventNamespace][eventName]) {
-			this.handlers[eventNamespace][eventName][id](eventData);
+			this.handlers[eventNamespace][eventName][id](event);
 		}
 	}
 };

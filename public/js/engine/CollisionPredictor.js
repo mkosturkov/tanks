@@ -1,9 +1,9 @@
 'use strict';
-function CollisionPredictor(sceneWidth, sceneHeight, collisionHandler, scene) {
+function CollisionPredictor(sceneWidth, sceneHeight, collisionHandler, updater) {
 	this.sceneWidth = sceneWidth;
 	this.sceneHeight = sceneHeight;
 	this.collisionHandler = collisionHandler;
-	this.scene = scene;
+	this.updater = updater;
 	
 	this.collisionTrajectories = {};
 }
@@ -19,21 +19,19 @@ CollisionPredictor.prototype.haveCollisionInTime = function(dt, movingObject1, m
 
 CollisionPredictor.prototype.getCollisionTimes = function(incomming, target) {
 		var times = [];
-		var point = incomming.plane.lines.AB.getCrossPoints(target.plane.lines.AB, true);
-		if(point === false || point === Infinity) {
-			// TODO: Handle
-			return [];
-		}
 		var pointTimes = {
-			A: {point: point},
+			A: {point: incomming.plane.lines.AB.getCrossPoints(target.plane.lines.AB, true)},
 			B: {point: incomming.plane.lines.CD.getCrossPoints(target.plane.lines.AB, true)},
 			C: {point: incomming.plane.lines.AB.getCrossPoints(target.plane.lines.CD, true)},
 			D: {point: incomming.plane.lines.CD.getCrossPoints(target.plane.lines.CD, true)}
 		};
-		pointTimes.A.time = incomming.movingObject.getTimeToPoint(pointTimes.A.point);
-		pointTimes.B.time = incomming.movingObject.getTimeToPoint(pointTimes.B.point);
-		pointTimes.C.time = incomming.movingObject.getTimeToPoint(pointTimes.C.point);
-		pointTimes.D.time = incomming.movingObject.getTimeToPoint(pointTimes.D.point);
+		for(var x in pointTimes) {
+			if(pointTimes[x].point === Infinity) {
+				pointTimes[x].time = Infinity;
+			} else if(pointTimes[x].point !== false){
+				pointTimes[x].time = incomming.movingObject.getTimeToPoint(pointTimes[x].point);
+			}
+		}
 		
 		
 		for(var x in pointTimes) {
@@ -42,66 +40,66 @@ CollisionPredictor.prototype.getCollisionTimes = function(incomming, target) {
 			}
 		}
 		
-		var product = Math.cos(incomming.movingObject.rot) * incomming.movingObject.speed 
-					* Math.cos(target.movingObject.rot) * target.movingObject.speed;
-		if(product === 0) {
-			product = Math.sin(incomming.movingObject.rot) * incomming.movingObject.speed 
-					* Math.sin(target.movingObject.rot) * target.movingObject.speed;
-		}
-		var sameDirection = product > 0;
-		var orderedPoints = [{}, {}];
-		if(pointTimes.A.time < pointTimes.C.time) {
-			orderedPoints[0].entryTime = pointTimes.A.time;
-			orderedPoints[0].entryPoint = pointTimes.A.point;
-			orderedPoints[0].exitPoint = pointTimes.C.point;
-			orderedPoints[0].targetPointName = sameDirection ? 'A' : 'B';
-		} else {
-			orderedPoints[0].entryTime = pointTimes.C.time;
-			orderedPoints[0].entryPoint = pointTimes.C.point;
-			orderedPoints[0].exitPoint = pointTimes.A.point;
-			orderedPoints[0].targetPointName = sameDirection ? 'D' : 'C';
-		}
-		if(pointTimes.B.time < pointTimes.D.time) {
-			orderedPoints[1].entryTime = pointTimes.B.time;
-			orderedPoints[1].entryPoint = pointTimes.B.point;
-			orderedPoints[1].exitPoint = pointTimes.D.point;
-			orderedPoints[1].targetPointName = sameDirection ? 'A' : 'B';
-		} else {
-			orderedPoints[1].entryTime = pointTimes.D.time;
-			orderedPoints[1].entryPoint = pointTimes.D.point;
-			orderedPoints[1].exitPoint = pointTimes.B.point;
-			orderedPoints[1].targetPointName = sameDirection ? 'D' : 'C';
-		}
-		var crossLine = new Geometry.Line(orderedPoints[0].entryPoint, orderedPoints[0].exitPoint);
-		var angle = Math.PI - crossLine.getAngle(target.plane.lines.AB);
-		var relativeSpeed = Math.abs(incomming.movingObject.speed * Math.cos(angle)) * (sameDirection ? 1 : -1);
 		
-		orderedPoints.forEach(function(point) {
-			var plane = target.movingObject.getPlaneInTime(point.entryTime);
-			var triangle = new Geometry.Triangle(
-				plane.points[point.targetPointName],
-				point.entryPoint,
-				point.exitPoint
-			);
-			var distance = plane.points[point.targetPointName].getDistanceToPoint(point.entryPoint);
-			if(sameDirection) {
-				var coef = triangle.getAngle('B') > Math.PI / 2 ? -1 : 1;
-				var planeOffset = distance * coef;
-				var time = planeOffset / (relativeSpeed - target.movingObject.speed);
-			} else {
-				var time = distance / (Math.abs(relativeSpeed) + Math.abs(target.movingObject.speed));
-			}
-			
-			
-			if(time >= 0) {
-				times.push(point.entryTime + time);
-			}
-		});
+//		var product = Math.cos(incomming.movingObject.rot) * incomming.movingObject.speed 
+//					* Math.cos(target.movingObject.rot) * target.movingObject.speed;
+//		if(product === 0) {
+//			product = Math.sin(incomming.movingObject.rot) * incomming.movingObject.speed 
+//					* Math.sin(target.movingObject.rot) * target.movingObject.speed;
+//		}
+//		var sameDirection = product > 0;
+//		var orderedPoints = [{}, {}];
+//		if(pointTimes.A.time < pointTimes.C.time) {
+//			orderedPoints[0].entryTime = pointTimes.A.time;
+//			orderedPoints[0].entryPoint = pointTimes.A.point;
+//			orderedPoints[0].exitPoint = pointTimes.C.point;
+//			orderedPoints[0].targetPointName = sameDirection ? 'A' : 'B';
+//		} else {
+//			orderedPoints[0].entryTime = pointTimes.C.time;
+//			orderedPoints[0].entryPoint = pointTimes.C.point;
+//			orderedPoints[0].exitPoint = pointTimes.A.point;
+//			orderedPoints[0].targetPointName = sameDirection ? 'D' : 'C';
+//		}
+//		if(pointTimes.B.time < pointTimes.D.time) {
+//			orderedPoints[1].entryTime = pointTimes.B.time;
+//			orderedPoints[1].entryPoint = pointTimes.B.point;
+//			orderedPoints[1].exitPoint = pointTimes.D.point;
+//			orderedPoints[1].targetPointName = sameDirection ? 'A' : 'B';
+//		} else {
+//			orderedPoints[1].entryTime = pointTimes.D.time;
+//			orderedPoints[1].entryPoint = pointTimes.D.point;
+//			orderedPoints[1].exitPoint = pointTimes.B.point;
+//			orderedPoints[1].targetPointName = sameDirection ? 'D' : 'C';
+//		}
+//		var crossLine = new Geometry.Line(orderedPoints[0].entryPoint, orderedPoints[0].exitPoint);
+//		var angle = Math.PI - crossLine.getAngle(target.plane.lines.AB);
+//		var relativeSpeed = Math.abs(incomming.movingObject.speed * Math.cos(angle)) * (sameDirection ? 1 : -1);
+//		
+//		orderedPoints.forEach(function(point) {
+//			var plane = target.movingObject.getPlaneInTime(point.entryTime);
+//			var triangle = new Geometry.Triangle(
+//				plane.points[point.targetPointName],
+//				point.entryPoint,
+//				point.exitPoint
+//			);
+//			var distance = plane.points[point.targetPointName].getDistanceToPoint(point.entryPoint);
+//			if(sameDirection) {
+//				var coef = triangle.getAngle('B') > Math.PI / 2 ? -1 : 1;
+//				var planeOffset = distance * coef;
+//				var time = planeOffset / (relativeSpeed - target.movingObject.speed);
+//			} else {
+//				var time = distance / (Math.abs(relativeSpeed) + Math.abs(target.movingObject.speed));
+//			}
+//			
+//			
+//			if(time >= 0) {
+//				times.push(point.entryTime + time);
+//			}
+//		});
 		return times;
 };
 
 CollisionPredictor.prototype.addItem = function(movingObject) {
-	this.scene.updatePositions();
 	var item = new CollisionPredictor.CollisionTrajectory(this, movingObject);
 	
 	// Walk through all the current collidables and check for intersections
@@ -111,7 +109,8 @@ CollisionPredictor.prototype.addItem = function(movingObject) {
 			continue;
 		}
 		
-		var times = this.getCollisionTimes(item, item2);
+		var times = this.getCollisionTimes(item, item2)
+						.concat(this.getCollisionTimes(item2, item));
 		
 		if(times.length > 0) {
 			new CollisionPredictor.CollisionPoint(
@@ -265,5 +264,6 @@ CollisionPredictor.CollisionPoint.prototype.cancel = function() {
 
 CollisionPredictor.CollisionPoint.prototype.execute = function() {
 	this.removeFromLists();
+	this.colidableA.detector.updater.updatePositions();
 	this.callback(this.colidableA, this.colidableB);
 };
