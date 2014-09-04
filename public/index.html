@@ -2,145 +2,82 @@
 <html>
   <head>
     <title>Tanks tester</title>
-    <script src="js/graphics/Scene.js"></script>
-    <script src="js/graphics/MovingObject.js"></script>
-	<script src="js/graphics/Geometry.js"></script>
-	<script src="js/graphics/CollisionDetector.js"></script>
+	<script src="js/engine/EventDispatcher.js"></script>
+	<script src="js/engine/Geometry.js"></script>
+	<script src="js/engine/MovingObject.js"></script>
+	<script src="js/engine/MovingObjectsUpdater.js"></script>
+	<script src="js/engine/CollisionPredictor.js"></script>
+	<script src="js/engine/Renderer.js"></script>
+	<script src="js/controllers/KeyboardController.js"></script>
+	
+	<script src="js/game/GameObjects.js"></script>
+	<script src="js/game/GameObjectsFactory.js"></script>
+	<script src="js/game/Client.js"></script>
+	<script src="js/game/Server.js"></script>
   </head>
   <body>
 	<canvas id="the-canvas" width="500" height="500"></canvas>
-	<script>
-		/* Do Dependencie injections */
-		Scene.prototype.setTimeout = function(callback, timeout) {
-			return window.setTimeout(callback, timeout);
-		};
-		Scene.prototype.setInterval = function(callback, interval) {
-			return window.setInterval(callback, interval);
-		};
-		Scene.prototype.clearTimeout = function(timeoutId) {
-			return window.clearTimeout(timeoutId);
-		};
-		Scene.prototype.clearInterval = function(intervalId) {
-			return window.clearInterval(intervalId);
-		};
+	<script>				
+		Renderer.timerFunctions = window;
+		KeyboardController.document = document;
 		
-		var canvas = document.getElementById('the-canvas');
-		var scene = new Scene();
-		scene.setCanvas(canvas);
-		var c1 = document.createElement('canvas');
-		c1.width = 200;
-		c1.height = 100;
-		var ctc1 = c1.getContext('2d');
-		ctc1.fillStyle = '#00ff00';
-		ctc1.fillRect(0, 0, 500, 500);
-		var o1 = new MovingObject();
-		o1.getImageCallback = function() {
-			return c1;
-		};
-		o1.config = {
-			speed: 0.1,
-			rotSpeed: 0.001
-		};
-		o1.width = c1.width;
-		o1.height = c1.height;
-		o1.x = o1.width / 2 + 100;
-		o1.y = o1.height / 2 + 100;
+		var serverOF = new GameObjectsFactory();
+		var serverED = new EventDispatcher();
+		var updater = new MovingObjectsUpdater();
 		
-		console.log('hw = ' + o1.getHalfWidth());
-		console.log('hh = ' + o1.getHalfHeight());
-		console.log('hd = ' + o1.getHalfDiagonal());
-		console.log('da = ' + o1.getDiagonalAngle());
-		
-		function logEdges() {
-			console.log('ax = ' + o1.getEdge('A', true));
-			console.log('ay = ' + o1.getEdge('A', false));
-			console.log('bx = ' + o1.getEdge('B', true));
-			console.log('by = ' + o1.getEdge('B', false));
-			console.log('cx = ' + o1.getEdge('C', true));
-			console.log('cy = ' + o1.getEdge('C', false));
-			console.log('dx = ' + o1.getEdge('D', true));
-			console.log('dy = ' + o1.getEdge('D', false));
-		};
-		//logEdges();
-		
-		
-		
-		c2 = document.createElement('canvas');
-		c2.height = 100;
-		c2.width = 100;
-		var ctc2 = c2.getContext('2d');
-		ctc2.fillStyle = '#0000ff';
-		ctc2.fillRect(0, 0, 100, 100);
-		var o2 = new MovingObject();
-		o2.getImageCallback = function() {
-			return c2;
-		};
-		o2.width = c2.width;
-		o2.height = c2.height;
-		o2.x = 400;
-		o2.y = 100;
-		
-		scene.addDrawObject(o1);
-		scene.addDrawObject(o2);
-		scene.start();
-		//setTimeout(function() {scene.stop();}, 3100); 
-		
-		var cd = new CollisionDetector(500, 500, function(colidableA, colidableB) {
-			colidableA.movingObject.speed = 0;
-			cd.removeItem(colidableA.id);
-			if(colidableB) {
-				colidableB.movingObject.speed = 0;
-				//cd.removeItem(colidableB.id);
-			}
-			console.log('Hit at ' + (new Date()).getTime());
-		}, scene);
-		cd.addItem(o2);
-		var co;
-		
-		var keyCode = 0;
-		document.onkeydown = function(event) {
-			if(event.keyCode === keyCode) {
-				return false;
-			}
-			switch(event.keyCode) {
-				case 37: // left
-					o1.rotateLeft();
-				break;
-				case 38: // up
-					o1.moveForward();
-				break;
-				case 39: // right
-					o1.rotateRight();
-				break;
-				case 40: // down
-					o1.moveBackwards();
-				break;
-			}
-			if([37, 38, 39, 40].indexOf(event.keyCode) > -1) {
-				event.preventDefault();
-				if(co) {
-					cd.removeItem(co);
+		var collisionHandler = function(c1, c2) {
+			c1.remove();
+			c1.movingObject.stopMoving();
+			c1.detector.addItem(c1.movingObject);
+			serverED.fireEvent('object', 'stopped', {
+				id: c1.movingObject.id,
+				position: {
+					x: c1.movingObject.x,
+					y: c1.movingObject.y,
+					rot: c1.movingObject.rot
 				}
-				co = cd.addItem(o1);
+			});
+			if(c2) {
+				c2.remove();
+				c2.movingObject.stopMoving();
+				c2.detector.addItem(c2.movingObject);
+				serverED.fireEvent('object', 'stopped', {
+					id: c2.movingObject.id,
+					position: {
+						x: c2.movingObject.x,
+						y: c2.movingObject.y,
+						rot: c2.movingObject.rot
+					}
+				});
 			}
-			keyCode = event.keyCode;
 		};
 		
-		document.onkeyup = function(event) {
-			if(event.keyCode === 37 || event.keyCode === 39) {
-				o1.stopRotating();
-			} else if(event.keyCode === 38 || event.keyCode === 40) {
-				o1.stopMoving();
-			}
-			if([37, 38, 39, 40].indexOf(event.keyCode) > -1) {
-				event.preventDefault();
-			}
-			if(co) {
-				cd.removeItem(co);
-			}
-			keyCode = 0;
-			//logEdges();
+		var collsionPredictor = new CollisionPredictor(500, 500, collisionHandler, updater);
+		var server = new Server(serverED, updater, collsionPredictor, serverOF);
+		server.bindEvents();
+		
+		var clientOF = new GameObjectsFactory();
+		var clientED = new EventDispatcher();
+		var renderer = new Renderer(document.getElementById('the-canvas'));
+		
+		var createEventPropagator = function(ed) {
+			return function(event) {
+				ed.fireEvent(event.namespace, event.name, event.data, event.playerId, event.eventTime);
+			};
 		};
+		var serverPropagator = createEventPropagator(serverED);
+		var clientPropagator = createEventPropagator(clientED);
+		clientED.addNamespaceHandler('player', serverPropagator);
+		clientED.addNamespaceHandler('game', serverPropagator);
+		serverED.addNamespaceHandler('object', clientPropagator);
+		serverED.addNamespaceHandler('keyboard', clientPropagator);
+		
+		var client = new Client(clientED, renderer, clientOF);
+		client.bindEvents();
+		client.addPlayer(0);
+		client.addPlayer(1);
+		client.start();
+		
 	</script>
   </body>
 </html>
